@@ -1,0 +1,27 @@
+.env
+Archive 3/
+phaseB_input/
+phaseB_input_unused/
+phaseB_work/
+oda.deb
+*.dwg
+*.DWG
+*.dwl
+*.dwl2
+*.dxf
+__MACOSX/
+__pycache__/
+.ipynb_checkpoints/
+phaseC_data/
+runs/
+hub_upload/
+results.json
+*.pt
+
+backend/data/
+backend/models/
+.venv/
+
+.tools/
+frontend/node_modules/
+frontend/dist/

@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f4f1ea;
+  --surface: #fbfaf6;
+  --ink: #1b1b1a;
+  --muted: #666158;
+  --rule: #d9d4c7;
+  --accent: #a8472a;
+  --accent-ink: #ffffff;
+  --blueprint: #25507a;
+  --ok: #3f6b4a;
+  --critical: #b3261e;
+  --major: #8f5a00;
+  --minor: #435d80;
+  --grid: rgba(27, 27, 26, 0.045);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14130f;
+    --surface: #1c1b17;
+    --ink: #ece8dd;
+    --muted: #a39e92;
+    --rule: #37342c;
+    --accent: #e07a55;
+    --accent-ink: #1a0f0a;
+    --blueprint: #8fb4dc;
+    --ok: #86c295;
+    --critical: #ff8f86;
+    --major: #ffb95a;
+    --minor: #9db6dc;
+    --grid: rgba(236, 232, 221, 0.05);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-blueprint: var(--blueprint);
+  --color-ok: var(--ok);
+  --color-critical: var(--critical);
+  --color-major: var(--major);
+  --color-minor: var(--minor);
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.sweep {
+  animation: sweep 1.4s ease-in-out infinite;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.plan-img {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .plan-img {
+    filter: invert(0.9) hue-rotate(180deg);
+  }
+}

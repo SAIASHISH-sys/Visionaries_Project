@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+python-multipart
+pydantic
+ezdxf
+shapely
+svgelements
+scipy
+pandas
+numpy<2
+opencv-python-headless<4.12
+torch
+segmentation-models-pytorch
+python-dotenv
+google-genai

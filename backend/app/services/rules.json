@@ -1,0 +1,91 @@
+{
+  "checks": {
+    "min_area": {
+      "title": "Minimum room area",
+      "severity": "major",
+      "why": "Rooms below the minimum area cannot hold the furniture and circulation the use needs and may fail the habitable-room requirements.",
+      "remedy": "Enlarge the room, merge it with an adjoining space, or change its designated use.",
+      "clause": null
+    },
+    "min_width": {
+      "title": "Minimum room width",
+      "severity": "major",
+      "why": "A room that is too narrow is hard to furnish and use even when its area is adequate.",
+      "remedy": "Widen the room by shifting a wall, or reshape it so the clear width meets the minimum.",
+      "clause": null
+    },
+    "corridor_width": {
+      "title": "Corridor minimum width",
+      "severity": "critical",
+      "why": "Narrow corridors restrict movement of people, stretchers and wheelchairs and slow evacuation in an emergency.",
+      "remedy": "Widen the corridor, or relocate the walls or fixtures that pinch it.",
+      "clause": null
+    },
+    "staircase_width": {
+      "title": "Staircase minimum clear width",
+      "severity": "critical",
+      "why": "Stair width governs how quickly people can leave the building and whether two streams can pass.",
+      "remedy": "Increase the flight width, or provide an additional or wider staircase.",
+      "clause": null
+    }
+  },
+  "room_rules": {
+    "M.BEDROOM": {"min_area_m2": 9.5, "min_width_mm": 2700},
+    "CHILDREN BEDRM": {"min_area_m2": 7.5, "min_width_mm": 2400},
+    "GUEST BEDRM": {"min_area_m2": 7.5, "min_width_mm": 2400},
+    "KITCHEN": {"min_area_m2": 5.0, "min_width_mm": 1800},
+    "TOILET": {"min_area_m2": 2.0, "min_width_mm": 1200},
+    "WC": {"min_area_m2": 1.1, "min_width_mm": 900},
+    "BATH": {"min_area_m2": 1.1, "min_width_mm": 900},
+    "BALCONY": {"min_width_mm": 1200},
+    "UTILITY": {"min_area_m2": 2.0},
+    "RECEPTION": {"min_area_m2": 15.0},
+    "MULTIPURPOSE HALL": {"min_area_m2": 20.0},
+    "LOBBY": {"min_area_m2": 5.0},
+    "ELECTRICAL ROOM": {"min_area_m2": 10.0}
+  },
+  "min_corridor_width_mm": 1800,
+  "min_staircase_width_mm": 1000,
+  "adjacency_rules": [
+    {
+      "id": "bedroom_toilet",
+      "title": "Bedroom must have accessible toilet",
+      "source": ["M.BEDROOM", "CHILDREN BEDRM", "GUEST BEDRM"],
+      "near": ["TOILET", "BATH", "WC"],
+      "severity": "major",
+      "why": "A bedroom with no adjoining toilet or bath forces occupants to cross other spaces, which hurts privacy and accessibility.",
+      "remedy": "Add a toilet or bath next to the bedroom, or connect it to an existing one with a door.",
+      "clause": null
+    },
+    {
+      "id": "kitchen_living",
+      "title": "Kitchen must connect to living/dining",
+      "source": ["KITCHEN"],
+      "near": ["DINING", "LIVING", "FOYER"],
+      "severity": "minor",
+      "why": "A kitchen cut off from the dining or living area makes serving and supervision awkward.",
+      "remedy": "Provide a door or open passage between the kitchen and the dining or living space.",
+      "clause": null
+    },
+    {
+      "id": "stair_exit",
+      "title": "Staircase must be near fire exit / lobby",
+      "source": ["STAIRCASE"],
+      "near": ["FIRE TOWER", "LOBBY", "CORRIDOR", "FIRE LIFT"],
+      "severity": "critical",
+      "why": "A staircase that does not open onto a lobby, corridor or fire tower may not give a protected route out of the building.",
+      "remedy": "Relocate the staircase or add a lobby or protected passage connecting it to the exit route.",
+      "clause": null
+    },
+    {
+      "id": "reception_circulation",
+      "title": "Reception must connect to corridor or lobby",
+      "source": ["RECEPTION"],
+      "near": ["CORRIDOR", "LOBBY", "FOYER"],
+      "severity": "minor",
+      "why": "Reception that is not reachable from circulation space is hard for visitors to find and reach.",
+      "remedy": "Connect the reception to the nearest corridor or lobby.",
+      "clause": null
+    }
+  ]
+}
