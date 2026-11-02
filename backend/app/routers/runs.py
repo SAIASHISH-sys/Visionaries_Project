@@ -67,6 +67,13 @@ def generate(run_id: str):
     return run_info(run_id)
 
 
+@router.post("/{run_id}/cancel", response_model=RunInfo)
+def cancel(run_id: str):
+    store.run_dir(run_id)
+    jobs.cancel(run_id)
+    return run_info(run_id)
+
+
 @router.get("/{run_id}/preview.svg")
 def preview_svg(run_id: str):
     return FileResponse(store.run_dir(run_id) / "preview.svg", media_type="image/svg+xml")

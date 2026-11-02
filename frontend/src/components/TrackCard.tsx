@@ -8,13 +8,13 @@ interface Props {
   status: TrackStatus;
 }
 
-const STATE_TEXT = { idle: "Not generated", queued: "Queued", running: "Running", done: "Ready", failed: "Failed" };
+const STATE_TEXT: Record<string, string> = { idle: "Not generated", queued: "Queued", running: "Running", done: "Ready", failed: "Failed", cancelled: "Cancelled" };
 const COUNTS: [string, string][] = [["rooms", "Rooms"], ["doors", "Doors"], ["windows", "Windows"], ["walls", "Walls"]];
 
 export function TrackCard({ track, runId, status }: Props) {
   const meta = TRACK_META[track];
   const active = status.state === "running" || status.state === "queued";
-  const color = status.state === "done" ? "var(--ok)" : status.state === "failed" ? "var(--critical)" : "var(--muted)";
+  const color = status.state === "done" ? "var(--ok)" : status.state === "failed" || status.state === "cancelled" ? "var(--critical)" : "var(--muted)";
   return (
     <article className="relative flex flex-col border border-rule bg-surface p-5" aria-label={`${meta.name} track`}>
       <div className="flex items-start justify-between gap-3">
@@ -50,7 +50,7 @@ export function TrackCard({ track, runId, status }: Props) {
             </a>
           </>
         )}
-        {status.state === "failed" && (
+        {(status.state === "failed" || status.state === "cancelled") && (
           <p role="alert" className="m-0 border-t border-rule pt-3 text-sm text-critical">
             {status.error}
           </p>

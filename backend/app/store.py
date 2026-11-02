@@ -86,9 +86,11 @@ def update_status(run_id, track=None, **fields):
         return status
 
 
-def clear_results(run_id):
+def clear_results(run_id, keep_tracks=()):
     path = run_dir(run_id)
+    keep = {f"manifest_{t}.json" for t in keep_tracks}
     for pattern in ("manifest_*.json", "comparison.json", "compliance_*.json", "explanations_*.json", "status.json"):
         for f in path.glob(pattern):
-            f.unlink()
+            if f.name not in keep:
+                f.unlink()
     shutil.rmtree(path / "gnn_work", ignore_errors=True)

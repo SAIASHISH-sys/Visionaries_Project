@@ -370,8 +370,8 @@ def as_polygons(geom):
     if geom.is_empty:
         return []
     if geom.geom_type == "Polygon":
-        return [geom]
-    return [g for g in getattr(geom, "geoms", []) if g.geom_type == "Polygon"]
+        return [geom] if len(geom.exterior.coords) >= 4 else []
+    return [g for g in getattr(geom, "geoms", []) if g.geom_type == "Polygon" and len(g.exterior.coords) >= 4]
 
 
 def extract_spaces(solid, cfg):
@@ -380,8 +380,10 @@ def extract_spaces(solid, cfg):
     spaces = []
     for ci, comp in enumerate(comps):
         for ring in comp.interiors:
+            if len(ring.coords) < 4:
+                continue
             hole = Polygon(ring)
-            if hole.area < cfg["min_hole_area"]:
+            if not hole.is_valid or hole.area < cfg["min_hole_area"]:
                 continue
             inner = [comps[j] for j in comp_tree.query(hole, predicate="contains")]
             shape = hole.difference(unary_union(inner)) if inner else hole
@@ -492,7 +494,7 @@ def describe_spaces(spaces, to_m, cfg):
 
 def open_spaces(comps, plan_comps, tags, cfg):
     g = cfg["open_space_closing"]
-    filled = unary_union([Polygon(comps[c].exterior) for c in plan_comps])
+    filled = unary_union([Polygon(comps[c].exterior) for c in plan_comps if len(comps[c].exterior.coords) >= 4])
     closed = filled.buffer(g, join_style=2).buffer(-g, join_style=2)
     tol = cfg["snap_tol"]
     pockets = as_polygons(closed.difference(filled).buffer(-1).buffer(1))
@@ -588,7 +590,7 @@ def split_space(space, pts, dirs, cfg):
 def connect_openings(openings, spaces, comps, cfg):
     spaces = [s for s in spaces if s["status"] != "void"]
     tree = STRtree([s["geom"] for s in spaces])
-    comp_tree = STRtree([Polygon(c.exterior) for c in comps])
+    comp_tree = STRtree([Polygon(c.exterior) for c in comps if len(c.exterior.coords) >= 4])
 
     def side(c, n, sign):
         for d in cfg["door_probe_offsets"]:
@@ -817,11 +819,17 @@ def unit_labels(ex, spaces, cfg):
 
 
 def clean(poly):
-    return shapely.remove_repeated_points(poly.simplify(0.5), 0.5)
+    result = shapely.remove_repeated_points(poly.simplify(0.5), 0.5)
+    if result.is_empty or result.geom_type != "Polygon" or len(result.exterior.coords) < 4:
+        return poly
+    return result
 
 
 def rnd_coords(poly):
-    return [[round(x, 1), round(y, 1)] for x, y in clean(poly).exterior.coords]
+    c = clean(poly)
+    if c.is_empty or c.geom_type != "Polygon" or len(c.exterior.coords) < 4:
+        return [[round(x, 1), round(y, 1)] for x, y in poly.exterior.coords]
+    return [[round(x, 1), round(y, 1)] for x, y in c.exterior.coords]
 
 
 def room_record(s, openings, edges):
@@ -833,7 +841,7 @@ def room_record(s, openings, edges):
     rec["centroid"] = [round(c, 1) for c in s["geom"].centroid.coords[0]]
     rec["bbox"] = [round(c, 1) for c in s["geom"].bounds]
     rec["polygon"] = rnd_coords(s["geom"])
-    rec["holes"] = [[[round(x, 1), round(y, 1)] for x, y in r.coords] for r in clean(s["geom"]).interiors]
+    rec["holes"] = [[[round(x, 1), round(y, 1)] for x, y in r.coords] for r in clean(s["geom"]).interiors if len(r.coords) >= 4]
     rec["notes"] = [t["raw_label"] for t in s["notes"]]
     rec["raw_sizes"] = [t["raw_size"] for t in s["tags"] if t["raw_size"]]
     rec["doors"] = [o["id"] for o in openings if o["kind"] == "door" and s["id"] in o["connects"]]
@@ -998,7 +1006,7 @@ def run(path, cfg=CONFIG, out_path=None):
     tags = room_tags(ex, cfg)
     unassigned = assign_tags(spaces, tags, comps)
     tagged_comps = {s["component"] for s in spaces if s["tags"]}
-    plan_zone = unary_union([Polygon(comps[c].exterior) for c in tagged_comps]).buffer(5000)
+    plan_zone = unary_union([Polygon(comps[c].exterior) for c in tagged_comps if len(comps[c].exterior.coords) >= 4]).buffer(5000)
     plan_comps = [i for i, c in enumerate(comps) if c.intersects(plan_zone)]
     pockets = open_spaces(comps, plan_comps, unassigned, cfg)
     spaces = [s for s in spaces if s["component"] in tagged_comps] + pockets

@@ -23,6 +23,7 @@ def main():
         dest.parent.mkdir(parents=True, exist_ok=True)
         cached = hf_hub_download(repo, name, repo_type=repo_type, token=token)
         shutil.copy(cached, dest)
+        
         print(dest.relative_to(ROOT))
 
 

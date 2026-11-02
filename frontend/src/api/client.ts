@@ -56,9 +56,16 @@ export const api = {
       body: JSON.stringify({ floor_block }),
     }),
   generate: (id: string) => post<RunInfo>(`/runs/${id}/generate`),
+  cancel: (id: string) => post<RunInfo>(`/runs/${id}/cancel`),
   manifest: (id: string, track: Track) => request<Manifest>(`/runs/${id}/manifest/${track}`),
   compliance: (id: string, track: Track) => post<ComplianceReport>(`/runs/${id}/compliance?track=${track}`),
   explain: (id: string, track: Track) => post<ExplanationSet>(`/runs/${id}/compliance/explain?track=${track}`),
+  query: (id: string, track: Track, question: string) =>
+    request<{ answer: string }>(`/runs/${id}/query`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, track }),
+    }),
   compare: (id: string) => post<ComparisonResult>(`/runs/${id}/compare`),
 };
 

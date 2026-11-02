@@ -3,18 +3,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { ApiError, uploadDrawing } from "../api/client";
-import { isGenerating, useChooseFloor, useCompliance, useExplain, useGenerate, useManifest, useRun } from "../api/hooks";
+import { isGenerating, useCancel, useChooseFloor, useCompliance, useExplain, useGenerate, useManifest, useRun } from "../api/hooks";
 import { TRACKS, type Track } from "../api/types";
 import { ComplianceResults } from "../components/ComplianceResults";
+import { PlanChat } from "../components/PlanChat";
 import { Dropzone } from "../components/Dropzone";
 import { PlanViewer } from "../components/PlanViewer";
 import { Section } from "../components/Section";
 import { TrackCard } from "../components/TrackCard";
 import { TRACK_META } from "../lib/format";
 
-const NOT_CHECKABLE: Partial<Record<Track, string>> = {
-  raster: "This track produces no room names, so no rule can be applied to it.",
-};
+const NOT_CHECKABLE: Partial<Record<Track, string>> = {};
 
 const errorText = (e: unknown) => (e instanceof ApiError ? e.message : e instanceof Error ? e.message : null);
 
@@ -63,13 +62,14 @@ export function Workspace() {
 function Hero() {
   return (
     <div className="grid gap-6 pb-2 pt-6 md:grid-cols-[1fr_auto] md:items-end">
-      <h1 className="m-0 max-w-4xl font-serif text-6xl font-normal leading-[0.95] tracking-tight md:text-8xl">
-        Read the plan.
-        <br />
-        <em className="text-accent">Check the code.</em>
-      </h1>
-      <p className="m-0 max-w-sm text-base leading-relaxed text-muted">
-        Every drawing is read three independent ways, so you can see where they agree before a single rule is applied.
+      <div>
+        <p className="m-0 mb-2 font-mono text-xs font-medium tracking-widest text-accent uppercase">Visionaries · CV5570</p>
+        <h1 className="m-0 max-w-3xl text-5xl font-bold leading-tight tracking-tight md:text-7xl">
+          Floor Plan<br />Compliance
+        </h1>
+      </div>
+      <p className="m-0 max-w-sm text-sm leading-relaxed text-muted">
+        Three independent extraction methods — classical, GNN, and raster — so you see where they agree before any rule is applied.
       </p>
     </div>
   );
@@ -80,10 +80,12 @@ function RunWorkspace({ runId }: { runId: string }) {
   const run = useRun(runId).data!;
   const generating = isGenerating(run);
   const generate = useGenerate(runId);
+  const cancel = useCancel(runId);
   const chooseFloor = useChooseFloor(runId);
   const compliance = useCompliance(runId);
   const explain = useExplain(runId);
   const [track, setTrack] = useState<Track>("classical");
+  const [cancelFired, setCancelFired] = useState(false);
 
   const done = (t: Track) => run.tracks[t].state === "done";
   const anyDone = TRACKS.some(done);
@@ -166,17 +168,31 @@ function RunWorkspace({ runId }: { runId: string }) {
         title="Three readings"
         lede="Generate a manifest of rooms, doors and windows with each method. Classical runs first; the learned methods reuse its floor and extent."
         action={
-          <button
-            type="button"
-            disabled={generating || generate.isPending}
-            onClick={() => {
-              reset();
-              generate.mutate();
-            }}
-            className="bg-accent px-6 py-3 text-sm font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {generating ? "Generating…" : anyDone ? "Regenerate manifests" : "Generate manifests"}
-          </button>
+          <div className="flex gap-2">
+            {generating && (
+              <button
+                type="button"
+                disabled={cancel.isPending || cancelFired}
+                onClick={() => { setCancelFired(true); cancel.mutate(); }}
+                className="border border-critical px-4 py-3 text-sm font-semibold text-critical transition-opacity hover:opacity-80 disabled:opacity-50"
+              >
+                {cancel.isPending || cancelFired ? "Cancelling…" : "Cancel"}
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={generating || generate.isPending}
+              onClick={() => {
+                reset();
+                cancel.reset();
+                setCancelFired(false);
+                generate.mutate();
+              }}
+              className="bg-accent px-6 py-3 text-sm font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {generating ? "Generating…" : anyDone ? "Regenerate manifests" : "Generate manifests"}
+            </button>
+          </div>
         }
       >
         {generate.isError && <p role="alert" className="mb-4 text-sm text-critical">{errorText(generate.error)}</p>}
@@ -251,6 +267,16 @@ function RunWorkspace({ runId }: { runId: string }) {
           </div>
         )}
       </Section>
+      {anyDone && (
+        <Section
+          id="query"
+          index="04"
+          title="Query the plan"
+          lede="Ask anything about the floor plan — rooms, areas, violations, adjacency. Answers come from the manifest and compliance data."
+        >
+          <PlanChat runId={runId} track={track} />
+        </Section>
+      )}
     </div>
   );
 }

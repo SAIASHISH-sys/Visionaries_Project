@@ -53,18 +53,6 @@ export function IssueCard({ check, active, onSelect, ai, aiState }: Props) {
         )}
 
         <div className="border-t border-rule pt-3">
-          <p className="label m-0">Clause</p>
-          {check.clause ? (
-            <p className="m-0 mt-1 text-sm leading-relaxed">
-              <span className="font-mono text-xs">{[check.clause.code, check.clause.ref].filter(Boolean).join(" · ")}</span>
-              {check.clause.text && <span className="block text-muted">{check.clause.text}</span>}
-            </p>
-          ) : (
-            <p className="m-0 mt-1 text-sm italic text-muted">Clause reference pending. The threshold has not been tied to a code clause yet.</p>
-          )}
-        </div>
-
-        <div className="border-t border-rule pt-3">
           <p className="label m-0">{ai ? "AI explanation · advisory" : "Why it matters"}</p>
           {aiState === "loading" && !ai ? (
             <div className="mt-2 flex flex-col gap-2" aria-label="Writing explanation">

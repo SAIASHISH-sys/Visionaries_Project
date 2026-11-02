@@ -12,7 +12,7 @@ export function useRun(runId?: string) {
     queryKey: ["run", runId],
     queryFn: () => api.run(runId!),
     enabled: !!runId,
-    refetchInterval: (q) => (isGenerating(q.state.data) ? 1500 : false),
+    refetchInterval: (q) => (isGenerating(q.state.data) ? 5000 : false),
   });
 }
 
@@ -37,6 +37,14 @@ export function useGenerate(runId: string) {
   });
 }
 
+export function useCancel(runId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.cancel(runId),
+    onSuccess: (run) => qc.setQueryData(["run", runId], run),
+  });
+}
+
 export function useChooseFloor(runId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -54,6 +62,10 @@ export function useCompliance(runId: string) {
 
 export function useExplain(runId: string) {
   return useMutation({ mutationFn: (track: Track) => api.explain(runId, track) });
+}
+
+export function useQueryChat(runId: string, track: Track) {
+  return useMutation({ mutationFn: (question: string) => api.query(runId, track, question) });
 }
 
 export function useCompare(runId: string | undefined, doneKey: string, enabled: boolean) {

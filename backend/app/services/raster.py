@@ -1,9 +1,15 @@
+import os
 from functools import lru_cache
 
 from fastapi import HTTPException
 
 from .. import settings
-from .common import COMPUTE_LOCK, stamp
+from .common import stamp
+
+_CPU_THREADS = max(1, (os.cpu_count() or 2) // 2)
+os.environ.setdefault("OMP_NUM_THREADS", str(_CPU_THREADS))
+os.environ.setdefault("MKL_NUM_THREADS", str(_CPU_THREADS))
+os.environ.setdefault("OPENBLAS_NUM_THREADS", str(_CPU_THREADS))
 
 
 @lru_cache(maxsize=1)
@@ -11,6 +17,8 @@ def load_bundle():
     if not settings.RASTER_CKPT.exists():
         raise HTTPException(503, f"raster model missing: {settings.RASTER_CKPT}")
     import torch
+
+    torch.set_num_threads(_CPU_THREADS)
 
     import rastercv
 
@@ -53,8 +61,7 @@ def run(dxf, classical_manifest, run_id, source_file):
 
     s = settings.RASTER_MM_PER_PX
     region = rastercv.manifest_region(classical_manifest)
-    with COMPUTE_LOCK:
-        img, _ = rastercv.render_dxf(dxf, region, s)
-        pred, conf = rastercv.predict_image(b["model"], img, b["device"], batch=8 if b["device"] == "cuda" else 2)
-        struct = rastercv.extract_structure(pred, conf, region, s)
+    img, _ = rastercv.render_dxf(dxf, region, s)
+    pred, conf = rastercv.predict_image(b["model"], img, b["device"], batch=8 if b["device"] == "cuda" else 4)
+    struct = rastercv.extract_structure(pred, conf, region, s)
     return stamp(to_manifest(struct, region, s, settings.RASTER_CKPT.name), "raster", run_id, source_file)

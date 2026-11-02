@@ -3,6 +3,9 @@ from . import classical, gnn, raster
 
 
 def run_track(run_id, track):
+    existing = store.manifest_path(run_id, track)
+    if existing.exists():
+        return store.read_json(existing)
     meta = store.read_meta(run_id)
     dxf, path = store.dxf_path(run_id), store.run_dir(run_id)
     if track == "classical":

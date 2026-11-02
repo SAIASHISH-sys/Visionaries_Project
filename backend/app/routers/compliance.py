@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException
+from pydantic import BaseModel
 
 from .. import settings, store
 from ..schemas import ComplianceReport, ExplanationSet
@@ -39,3 +40,20 @@ def explain_run(run_id: str, track: str = "classical"):
 @router.post("/compliance", response_model=ComplianceReport)
 def check_manifest(manifest: dict = Body(...)):
     return check(manifest)
+
+
+class QueryRequest(BaseModel):
+    question: str
+    track: str = "classical"
+
+
+@router.post("/runs/{run_id}/query")
+def query_run(run_id: str, body: QueryRequest):
+    if not settings.GEMINI_API_KEY:
+        raise HTTPException(503, "GEMINI_API_KEY is not set")
+    track = check_track(body.track)
+    manifest = store.load_manifest(run_id, track)
+    compliance_path = store.run_dir(run_id) / f"compliance_{track}.json"
+    compliance_data = store.read_json(compliance_path) if compliance_path.exists() else None
+    answer = explain.query(body.question, manifest, compliance_data)
+    return {"answer": answer}

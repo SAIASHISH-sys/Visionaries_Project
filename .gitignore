@@ -18,7 +18,7 @@ hub_upload/
 results.json
 *.pt
 
-backend/data/
+
 backend/models/
 .venv/
 

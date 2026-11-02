@@ -1,5 +1,5 @@
 export type Track = "classical" | "gnn" | "raster";
-export type TrackState = "idle" | "queued" | "running" | "done" | "failed";
+export type TrackState = "idle" | "queued" | "running" | "done" | "failed" | "cancelled";
 export type Severity = "critical" | "major" | "minor";
 
 export const TRACKS: Track[] = ["classical", "gnn", "raster"];

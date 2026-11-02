@@ -1,10 +1,16 @@
 import json
+import os
 from functools import lru_cache
 
 from fastapi import HTTPException
 
 from .. import settings
-from .common import COMPUTE_LOCK, stamp
+from .common import stamp
+
+_CPU_THREADS = max(1, (os.cpu_count() or 1))
+os.environ.setdefault("OMP_NUM_THREADS", str(_CPU_THREADS))
+os.environ.setdefault("MKL_NUM_THREADS", str(_CPU_THREADS))
+os.environ.setdefault("OPENBLAS_NUM_THREADS", str(_CPU_THREADS))
 
 
 @lru_cache(maxsize=1)
@@ -14,12 +20,18 @@ def load_bundle():
         raise HTTPException(503, f"GNN model files missing: {', '.join(map(str, missing))}")
     import torch
 
+    torch.set_num_threads(_CPU_THREADS)
+
     import fpgraph
     import gnninfer
 
     device = torch.device(settings.GNN_DEVICE or ("cuda" if torch.cuda.is_available() else "cpu"))
     phase_a = json.loads(settings.PHASE_A_CONFIG.read_text())
     model, _ = gnninfer.load_model(settings.GNN_CKPT, device)
+    try:
+        model = torch.compile(model, mode="reduce-overhead")
+    except Exception:
+        pass
     return {
         "model": model,
         "device": device,
@@ -34,8 +46,8 @@ def run(dxf, run_path, run_id, source_file, floor_block=None):
     b = load_bundle()
     import cvpipeline
 
-    with COMPUTE_LOCK:
-        manifest = cvpipeline.run_floor(dxf, b["model"], b["phase_a"], b["lut"], b["stuff"], b["device"],
+    manifest = cvpipeline.run_floor(dxf, b["model"], b["phase_a"], b["lut"], b["stuff"], b["device"],
                                         work_dir=run_path / "gnn_work", thr=b["thr"], floor_block=floor_block,
-                                        amp=b["device"].type == "cuda")
+                                        amp=b["device"].type == "cuda",
+                                        node_budget=12000, max_tiles=8)
     return stamp(manifest, "gnn", run_id, source_file)
